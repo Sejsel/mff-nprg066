@@ -1,0 +1,3 @@
+[submodule "stef"]
+	path = stef
+	url = https://github.com/devnull-cz/stef.git
