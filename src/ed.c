@@ -4,10 +4,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char ** argv) {
 	if (argc == 1) {
 		errx(1, "no file provided");
+	}
+
+	for (int i = 0; i < argc; i++) {
+		if (argv[i][0] == '-') {
+			warnx("illegal option -- %s", (argv[i] + 1));
+			puts("usage: ed file");
+			return 1;
+		}
 	}
 
 	char* filename = argv[1];
