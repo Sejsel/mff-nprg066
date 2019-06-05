@@ -156,19 +156,19 @@ int handle_input(text *text, char *initialError) {
 			// Address range
 			rangeSet = true;
 		} else if (sscanf(input, "%c,%c%c%n", &rangeCharFrom, &rangeCharTo, &command, &pos) == 3 &&
-				(rangeCharFrom == '.' || rangeCharFrom == '$') &&
-				(rangeCharTo == '.' || rangeCharTo == '$')) {
+		           (rangeCharFrom == '.' || rangeCharFrom == '$') &&
+		           (rangeCharTo == '.' || rangeCharTo == '$')) {
 			// Address range (using two special characters)
 			lineFrom = rangeCharFrom == '.' ? currentLine : text->lineCount;
 			lineTo = rangeCharTo == '.' ? currentLine : text->lineCount;
 			rangeSet = true;
 		} else if (sscanf(input, "%c,%d%c%n", &rangeCharFrom, &lineTo, &command, &pos) == 3 &&
-				(rangeCharFrom == '.' || rangeCharFrom == '$')) {
+		           (rangeCharFrom == '.' || rangeCharFrom == '$')) {
 			// Address range (ending with a special character)
 			lineFrom = rangeCharFrom == '.' ? currentLine : text->lineCount;
 			rangeSet = true;
 		} else if (sscanf(input, "%d,%c%c%n", &lineFrom, &rangeCharTo, &command, &pos) == 3 &&
-				(rangeCharTo == '.' || rangeCharTo == '$')) {
+		           (rangeCharTo == '.' || rangeCharTo == '$')) {
 			// Address range (starting with a special character)
 			lineTo = rangeCharTo == '.' ? currentLine : text->lineCount;
 			rangeSet = true;
@@ -255,7 +255,7 @@ int handle_input(text *text, char *initialError) {
 	return lastError != NULL;
 }
 
-int main(int argc, char ** argv) {
+int main(int argc, char **argv) {
 	if (argc == 1) {
 		errx(1, "no file provided");
 	}
@@ -287,7 +287,6 @@ int main(int argc, char ** argv) {
 	if (file != NULL) {
 		printf("%zu\n", text->characterCount);
 	}
-
 
 	int error = handle_input(text, initialError);
 
