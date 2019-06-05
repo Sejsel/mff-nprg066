@@ -136,7 +136,7 @@ void print_range(text *text, size_t from, size_t to) {
 	}
 }
 
-int handle_input(text *text) {
+int handle_input(text *text, char *initialError) {
 	char *lastError = NULL;
 	bool verbose = false;
 	size_t currentLine = text->lineCount;
@@ -209,8 +209,12 @@ int handle_input(text *text) {
 			}
 
 			verbose = !verbose;
-			if (verbose && lastError != NULL) {
-				puts(lastError);
+			if (verbose) {
+				if (lastError != NULL) {
+					puts(lastError);
+				} else if (initialError != NULL) {
+					puts(initialError);
+				}
 			} 
 		} else if (command == 'h') {
 			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
@@ -221,6 +225,8 @@ int handle_input(text *text) {
 
 			if (lastError != NULL) {
 				puts(lastError);
+			} else if (initialError != NULL) {
+				puts(initialError);
 			}
 		} else if (command == 'p') {
 			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
@@ -283,18 +289,22 @@ int main(int argc, char ** argv) {
 		printf("%s: %s\n", filename, strerror(errno));
 	}
 
+	char *initialError = NULL;
+
 	text *text = NULL;
 	if (file != NULL) {
 		text = read_text(file);
 	} else {
 		text = calloc(1, sizeof(*text));
+		initialError = "Cannot open input file";
 	}
 
 	if (file != NULL) {
 		printf("%zu\n", text->characterCount);
 	}
 
-	int error = handle_input(text);
+
+	int error = handle_input(text, initialError);
 
 	return error;
 }
