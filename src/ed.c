@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_LINE_LENGTH 1025
-
 typedef struct text_line line;
 typedef struct text text;
 
@@ -22,35 +20,57 @@ struct text_line {
 	line *next;
 };
 
+char *read_line(FILE *stream) {
+	bool read = false;
+	size_t currentSize = 16;
+	size_t spaceAvailable = currentSize;
+	char *buffer = malloc(currentSize * sizeof(*buffer));
+	char *start = buffer;
+
+	while (fgets(start, spaceAvailable, stream)) {
+		if (strchr(start, '\n') != NULL) {
+			read = true;
+			break;
+		} else {
+			size_t oldSize = currentSize;
+			currentSize *= 2;
+			spaceAvailable = currentSize - oldSize + 1; // The + 1 is the previous NUL character
+			buffer = realloc(buffer, currentSize * sizeof(*buffer));
+			start = &buffer[currentSize - spaceAvailable];
+		}
+	}
+
+	if (!read) {
+		free(buffer);
+		return NULL;
+	}
+
+	return buffer;
+}
+
 text *read_text(FILE *file) {
 	line *firstLine = NULL;
 	line *lastLine = NULL;
 
 	int lineCount = 0;
 	int characterCount = 0;
-	while (true) {
-		char *buffer = malloc(MAX_LINE_LENGTH * sizeof(*buffer));
-
-		if (fgets(buffer, MAX_LINE_LENGTH, file)) {
-			line *line = malloc(sizeof(*line));
-			line->text = buffer;
-			line->prev = lastLine;
-			if (line->prev != NULL) {
-				line->prev->next = line;
-			}
-
-			if (firstLine == NULL) {
-				firstLine = line;
-			}
-
-			lineCount++;
-			characterCount += strlen(line->text);
-
-			lastLine = line;
-		} else {
-			free(buffer);
-			break;
+	char *fileLine;
+	while ((fileLine = read_line(file)) != NULL) {
+		line *line = malloc(sizeof(*line));
+		line->text = fileLine;
+		line->prev = lastLine;
+		if (line->prev != NULL) {
+			line->prev->next = line;
 		}
+
+		if (firstLine == NULL) {
+			firstLine = line;
+		}
+
+		lineCount++;
+		characterCount += strlen(line->text);
+
+		lastLine = line;
 	}
 
 	text *text = malloc(sizeof(*text));
