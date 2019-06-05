@@ -116,6 +116,16 @@ bool ensure_no_range_set(char **error, bool rangeSet, bool verbose) {
 	return true;
 }
 
+void print_range_numbered(text *text, size_t from, size_t to) {
+	line *line = text->firstLine;
+	for (size_t i = 1; i <= to; i++) {
+		if (i >= from) {
+			printf("%zu\t%s", i, line->text);
+		}
+		line = line->next;
+	}
+}
+
 void print_range(text *text, size_t from, size_t to) {
 	line *line = text->firstLine;
 	for (size_t i = 1; i <= to; i++) {
@@ -186,6 +196,12 @@ int handle_input(text *text) {
 			if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
 
 			print_range(text, lineFrom, lineTo);
+			currentLine = lineTo;
+		} else if (command == 'n') {
+			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
+			if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
+
+			print_range_numbered(text, lineFrom, lineTo);
 			currentLine = lineTo;
 		} else if (command == '\n') {
 			if (!rangeSet) {
