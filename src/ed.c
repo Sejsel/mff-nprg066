@@ -249,7 +249,7 @@ int main(int argc, char ** argv) {
 		text = calloc(1, sizeof(*text));
 	}
 
-	if (text != NULL) {
+	if (file != NULL) {
 		printf("%zu\n", text->characterCount);
 	}
 
