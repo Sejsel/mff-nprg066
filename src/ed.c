@@ -201,34 +201,30 @@ int handle_input(text *text, char *initialError) {
 
 		free(input);
 
-		if (command == 'H') {
+		if (command == 'H' || command == 'h') {
 			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
 			if (rangeSet) {
 				if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
 				if (!ensure_no_range_set(&lastError, rangeSet, verbose)) continue;
 			}
 
-			verbose = !verbose;
-			if (verbose) {
+			if (command == 'H') {
+				verbose = !verbose;
+			}
+
+			if (verbose || command == 'h') {
 				if (lastError != NULL) {
 					puts(lastError);
 				} else if (initialError != NULL) {
 					puts(initialError);
 				}
-			} 
-		} else if (command == 'h') {
-			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
-			if (rangeSet) {
-				if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
-				if (!ensure_no_range_set(&lastError, rangeSet, verbose)) continue;
+			}
+		} else if (command == 'p' || command == '\n') {
+			if (command == '\n' && !rangeSet) {
+				lineFrom++;
+				lineTo++;
 			}
 
-			if (lastError != NULL) {
-				puts(lastError);
-			} else if (initialError != NULL) {
-				puts(initialError);
-			}
-		} else if (command == 'p') {
 			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
 			if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
 
@@ -239,17 +235,6 @@ int handle_input(text *text, char *initialError) {
 			if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
 
 			print_range_numbered(text, lineFrom, lineTo);
-			currentLine = lineTo;
-		} else if (command == '\n') {
-			if (!rangeSet) {
-				lineFrom++;
-				lineTo++;
-			}
-
-			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
-			if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
-
-			print_range(text, lineFrom, lineTo);
 			currentLine = lineTo;
 		} else if (command == 'q') {
 			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
