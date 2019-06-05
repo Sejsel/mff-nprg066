@@ -254,6 +254,8 @@ int handle_input(text *text) {
 
 			break;
 		} else {
+			if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
+
 			lastError = "Unknown command";
 			print_error_message(lastError, verbose);
 		}
