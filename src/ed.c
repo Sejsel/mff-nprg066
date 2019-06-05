@@ -214,6 +214,14 @@ int handle_input(text *text) {
 
 			print_range(text, lineFrom, lineTo);
 			currentLine = lineTo;
+		} else if (command == 'q') {
+			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
+			if (rangeSet) {
+				if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
+				if (!ensure_no_range_set(&lastError, rangeSet, verbose)) continue;
+			}
+
+			break;
 		} else {
 			lastError = "Unknown command";
 			print_error_message(lastError, verbose);
