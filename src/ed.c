@@ -170,6 +170,16 @@ int handle_input(text *text) {
 			verbose = !verbose;
 			if (verbose && lastError != NULL) {
 				puts(lastError);
+			} 
+		} else if (command == 'h') {
+			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
+			if (rangeSet) {
+				if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
+				if (!ensure_no_range_set(&lastError, rangeSet, verbose)) continue;
+			}
+
+			if (lastError != NULL) {
+				puts(lastError);
 			}
 		} else if (command == 'p') {
 			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
