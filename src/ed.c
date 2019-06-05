@@ -168,6 +168,13 @@ int handle_input(text *text) {
 			// Should never happen as there will always be at least a newline or NULL is returned
 		}
 
+		if (lineFrom < 0) {
+			lineFrom = currentLine + lineFrom;
+		}
+		if (lineTo < 0) {
+			lineTo = currentLine + lineTo;
+		}
+
 		free(input);
 
 		if (command == 'H') {
