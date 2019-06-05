@@ -90,7 +90,7 @@ void print_error_message(char *message, bool verbose) {
 
 bool ensure_no_suffix(char **error, int length, int pos, bool verbose) {
 	if (length > pos + 1) {
-		*error = "Unknown command suffix";
+		*error = "Invalid command suffix";
 		print_error_message(*error, verbose);
 		return false;
 	}
