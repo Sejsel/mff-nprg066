@@ -283,7 +283,7 @@ int main(int argc, char **argv) {
 	char *filename = argv[1];
 	FILE *file = fopen(filename, "r+");
 	if (file == NULL) {
-		printf("%s: %s\n", filename, strerror(errno));
+		fprintf(stderr, "%s: %s\n", filename, strerror(errno));
 	}
 
 	char *initialError = NULL;
