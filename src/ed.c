@@ -139,7 +139,7 @@ void print_range(text *text, size_t from, size_t to) {
 int handle_input(text *text) {
 	char *lastError = NULL;
 	bool verbose = false;
-	int currentLine = text->lineCount;
+	size_t currentLine = text->lineCount;
 
 	char *input;
 
@@ -149,23 +149,47 @@ int handle_input(text *text) {
 		int lineFrom;
 		int lineTo;
 		char command;
+		char rangeCharFrom;
+		char rangeCharTo;
 		bool rangeSet = false;
 		if (sscanf(input, "%d,%d%c%n", &lineFrom, &lineTo, &command, &pos) == 3) {
 			// Address range
-			//printf("Read command, range: %d to %d, command: %c (pos: %d)\n", lineFrom, lineTo, command, pos);
+			rangeSet = true;
+		} else if (sscanf(input, "%c,%c%c%n", &rangeCharFrom, &rangeCharTo, &command, &pos) == 3 &&
+				(rangeCharFrom == '.' || rangeCharFrom == '$') &&
+				(rangeCharTo == '.' || rangeCharTo == '$')) {
+			// Address range (using two special characters)
+			lineFrom = rangeCharFrom == '.' ? currentLine : text->lineCount;
+			lineTo = rangeCharTo == '.' ? currentLine : text->lineCount;
+			rangeSet = true;
+		} else if (sscanf(input, "%c,%d%c%n", &rangeCharFrom, &lineTo, &command, &pos) == 3 &&
+				(rangeCharFrom == '.' || rangeCharFrom == '$')) {
+			// Address range (ending with a special character)
+			lineFrom = rangeCharFrom == '.' ? currentLine : text->lineCount;
+			rangeSet = true;
+		} else if (sscanf(input, "%d,%c%c%n", &lineFrom, &rangeCharTo, &command, &pos) == 3 &&
+				(rangeCharTo == '.' || rangeCharTo == '$')) {
+			// Address range (starting with a special character)
+			lineTo = rangeCharTo == '.' ? currentLine : text->lineCount;
 			rangeSet = true;
 		} else if (sscanf(input, "%d%c%n", &lineFrom, &command, &pos) == 2) {
 			// Address
-			//printf("Read command, line: %d, command: %c (pos: %d)\n", lineFrom, command, pos);
-			rangeSet = true;
 			lineTo = lineFrom;
+			rangeSet = true;
+		} else if (sscanf(input, ".%c%n", &command, &pos) == 1) {
+			// Address (current)
+			lineFrom = currentLine;
+			lineTo = lineFrom;
+			rangeSet = true;
+		} else if (sscanf(input, "$%c%n", &command, &pos) == 1) {
+			// Address (end of file)
+			lineFrom = text->lineCount;
+			lineTo = lineFrom;
+			rangeSet = true;
 		} else if (sscanf(input, "%c%n", &command, &pos) == 1) {
 			// No address
-			//printf("Read command, command: %c (pos: %d)\n", command, pos);
 			lineFrom = currentLine;
 			lineTo = currentLine;
-		} else {
-			// Should never happen as there will always be at least a newline or NULL is returned
 		}
 
 		if (lineFrom < 0) {
