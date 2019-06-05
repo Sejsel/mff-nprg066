@@ -20,6 +20,18 @@ struct text_line {
 	line *next;
 };
 
+void free_text(text *text) {
+	line *l = text->firstLine;
+	while (l != NULL) {
+		line *old = l;
+		l = l->next;
+		free(old->text);
+		free(old);
+	}
+
+	free(text);
+}
+
 char *read_line(FILE *stream) {
 	bool read = false;
 	size_t currentSize = 16;
@@ -56,7 +68,7 @@ text *read_text(FILE *file) {
 	int characterCount = 0;
 	char *fileLine;
 	while ((fileLine = read_line(file)) != NULL) {
-		line *line = malloc(sizeof(*line));
+		line *line = calloc(1, sizeof(*line));
 		line->text = fileLine;
 		line->prev = lastLine;
 		if (line->prev != NULL) {
@@ -289,6 +301,9 @@ int main(int argc, char **argv) {
 	}
 
 	int error = handle_input(text, initialError);
+
+	// No need to bother with this, but it makes it easier to check if there is any leak
+	free_text(text);
 
 	return error;
 }
