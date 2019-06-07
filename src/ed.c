@@ -281,7 +281,7 @@ int main(int argc, char **argv) {
 	}
 
 	char *filename = argv[1];
-	FILE *file = fopen(filename, "r+");
+	FILE *file = fopen(filename, "r");
 	if (file == NULL) {
 		fprintf(stderr, "%s: %s\n", filename, strerror(errno));
 	}
@@ -290,14 +290,22 @@ int main(int argc, char **argv) {
 
 	text *text = NULL;
 	if (file != NULL) {
+		errno = 0;
 		text = read_text(file);
-	} else {
-		text = calloc(1, sizeof(*text));
-		initialError = "Cannot open input file";
+		if (errno > 0) {
+			fprintf(stderr, "%s\n", strerror(errno));
+			free_text(text);
+			text = NULL;
+		}
+		if (text != NULL) {
+			printf("%zu\n", text->characterCount);
+		}
+		fclose(file);
 	}
 
-	if (file != NULL) {
-		printf("%zu\n", text->characterCount);
+	if (text == NULL) {
+		text = calloc(1, sizeof(*text));
+		initialError = "Cannot open input file";
 	}
 
 	int error = handle_input(text, initialError);
