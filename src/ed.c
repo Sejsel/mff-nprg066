@@ -43,6 +43,15 @@ void free_text(text *text) {
 	free(text);
 }
 
+line *get_line(text *text, int lineNumber) {
+	line *line = text->firstLine;
+	for (int i = 1; i < lineNumber; i++) {
+		line = line->next;
+	}
+
+	return line;
+}
+
 char *read_line(FILE *stream) {
 	bool read = false;
 	size_t currentSize = 16;
@@ -247,6 +256,41 @@ bool parse_write_command(char *command, int pos, char **error, bool verbose, cha
 	}
 }
 
+int input_mode(text *text, int lineNumber) {
+	char *input;
+
+	line *after;
+	line **nextPointer;
+	if (lineNumber == 0 || lineNumber == 1) {
+		nextPointer = &text->firstLine;
+		after = text->firstLine;
+	} else {
+		line *previous = get_line(text, lineNumber - 1);
+		nextPointer = &previous->next;
+		after = previous->next;
+	}
+
+	int addedLines = 0;
+	while ((input = read_line(stdin)) != NULL) {
+		if (input[0] == '.' && input[1] == '\n') {
+			// This check is safe thanks to the terminating \0 byte
+			free(input);
+			break;
+		}
+
+		line *newLine = calloc(1, sizeof(*newLine));
+		newLine->text = input;
+		newLine->next = after; // Will be overriden if not last
+		*nextPointer = newLine;
+		nextPointer = &newLine->next;
+
+		addedLines++;
+		text->characterCount += strlen(input);
+	}
+	text->lineCount += addedLines;
+	return addedLines;
+}
+
 int handle_input(text *text, char *initialError, char *originalFilename) {
 	char *lastError = NULL;
 	bool verbose = false;
@@ -353,11 +397,25 @@ int handle_input(text *text, char *initialError, char *originalFilename) {
 
 			print_range_numbered(text, lineFrom, lineTo);
 			currentLine = lineTo;
+		} else if (command == 'i') {
+			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
+			// The 0 address in this command is allowed
+			if ((lineFrom != 0 && lineTo != 0) && 
+			    !ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
+
+			// GNU ed uses the second address if a range is given, not throwing
+			// any kind of error even though the documentation mentions only
+			// one address is provided. We emulate this behavior.
+
+			int nextLine = lineTo == 0 ? 1 : lineTo;
+			int addedLineCount = input_mode(text, nextLine);
+
+			currentLine = addedLineCount > 0 ? nextLine + addedLineCount - 1 : lineTo;
 		} else if (command == 'd') {
 			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
 			if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
 
-			bool atEnd = text->lineCount == (size_t) lineTo;
+			bool atEnd = text->lineCount == (size_t)lineTo;
 
 			delete_range(text, lineFrom, lineTo);
 
