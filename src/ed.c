@@ -17,7 +17,6 @@ struct text {
 
 struct text_line {
 	char *text;
-	line *prev;
 	line *next;
 };
 
@@ -78,9 +77,8 @@ text *read_text(FILE *file) {
 	while ((fileLine = read_line(file)) != NULL) {
 		line *line = calloc(1, sizeof(*line));
 		line->text = fileLine;
-		line->prev = lastLine;
-		if (line->prev != NULL) {
-			line->prev->next = line;
+		if (lastLine != NULL) {
+			lastLine->next = line;
 		}
 
 		if (firstLine == NULL) {
