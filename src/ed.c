@@ -27,13 +27,17 @@ void print_error_message(char *message, bool verbose) {
 	}
 }
 
+void free_line(line *line) {
+	free(line->text);
+	free(line);
+}
+
 void free_text(text *text) {
 	line *l = text->firstLine;
 	while (l != NULL) {
 		line *old = l;
 		l = l->next;
-		free(old->text);
-		free(old);
+		free_line(old);
 	}
 
 	free(text);
@@ -174,6 +178,32 @@ void print_range(text *text, size_t from, size_t to) {
 		}
 		line = line->next;
 	}
+}
+
+void delete_range(text *text, size_t from, size_t to) {
+	line **nextPointer = &text->firstLine;
+	size_t deletedCharacters = 0;
+
+	line *l = text->firstLine;
+
+	for (size_t i = 1; i <= to; i++) {
+		line *next = l->next;
+
+		if (i == from - 1) {
+			// Will not happen if from is 1
+			nextPointer = &l->next;
+		}
+
+		if (i >= from) {
+			deletedCharacters += strlen(l->text);
+			free_line(l);
+		}
+		l = next;
+	}
+	*nextPointer = l;
+
+	text->lineCount -= to - from + 1;
+	text->characterCount -= deletedCharacters;
 }
 
 /*
@@ -323,6 +353,22 @@ int handle_input(text *text, char *initialError, char *originalFilename) {
 
 			print_range_numbered(text, lineFrom, lineTo);
 			currentLine = lineTo;
+		} else if (command == 'd') {
+			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
+			if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
+
+			bool atEnd = text->lineCount == (size_t) lineTo;
+
+			delete_range(text, lineFrom, lineTo);
+
+			if (atEnd) {
+				currentLine = text->lineCount;
+			} else {
+				currentLine = lineFrom;
+			}
+			if (text->lineCount == 0) {
+				currentLine = 0;
+			}
 		} else if (command == 'w') {
 			if (rangeSet) {
 				if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
