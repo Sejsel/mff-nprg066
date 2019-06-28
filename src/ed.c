@@ -225,10 +225,8 @@ bool parse_write_command(char *command, int pos, char **error, bool verbose, cha
 	int pureLength = length - 1; // There is a newline at the end which we want to ignore
 
 	if (pos != pureLength && !isspace(command[pos])) {
-		// The character after the w has to be whitespace or else this is an invalid suffix.
-		// This is a bit of a hack, as there are extra characters,
-		// this will always trigger and throw the invalid suffix error.
-		ensure_no_suffix(error, length, pos, verbose);
+		*error = "Unexpected command suffix";
+		print_error_message(*error, verbose);
 
 		*filename = NULL;
 		return true;
