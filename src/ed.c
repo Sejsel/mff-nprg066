@@ -289,10 +289,12 @@ int input_mode(text *text, int lineNumber) {
 	return addedLines;
 }
 
-int handle_input(text *text, char *initialError, char *originalFilename) {
+int handle_input(text *text, char *initialError, char **filename) {
 	char *lastError = NULL;
 	bool verbose = false;
 	size_t currentLine = text->lineCount;
+	bool modified = false;
+	int quitWarningCounter = 0;
 
 	char *input = NULL;
 
@@ -303,6 +305,10 @@ int handle_input(text *text, char *initialError, char *originalFilename) {
 
 		if ((input = read_line(stdin)) == NULL) {
 			break;
+		}
+
+		if (quitWarningCounter > 0) {
+			quitWarningCounter--;
 		}
 
 		int length = strlen(input);
@@ -408,6 +414,10 @@ int handle_input(text *text, char *initialError, char *originalFilename) {
 			int nextLine = lineTo == 0 ? 1 : lineTo;
 			int addedLineCount = input_mode(text, nextLine);
 
+			if (addedLineCount > 0) {
+				modified = true;
+			}
+
 			currentLine = addedLineCount > 0 ? nextLine + addedLineCount - 1 : lineTo;
 		} else if (command == 'd') {
 			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
@@ -416,6 +426,7 @@ int handle_input(text *text, char *initialError, char *originalFilename) {
 			bool atEnd = text->lineCount == (size_t)lineTo;
 
 			delete_range(text, lineFrom, lineTo);
+			modified = true;
 
 			if (atEnd) {
 				currentLine = text->lineCount;
@@ -431,25 +442,38 @@ int handle_input(text *text, char *initialError, char *originalFilename) {
 				if (!ensure_no_range_set(&lastError, rangeSet, verbose)) continue;
 			}
 
-			char *filename;
-			bool useFilename = parse_write_command(input, pos, &lastError, verbose, &filename);
-			if (useFilename && filename != NULL) {
-				write_text(text, filename, &lastError, verbose);
-				free(filename);
-			} else {
+			char *readFilename;
+			bool useFilename = parse_write_command(input, pos, &lastError, verbose, &readFilename);
+			if (useFilename && readFilename != NULL) {
+				write_text(text, readFilename, &lastError, verbose);
+				if (*filename == NULL) {
+					*filename = readFilename;
+				} else {
+					free(readFilename);
+				}
+			} else if (!useFilename) {
 				// The original filename is used
-				if (originalFilename == NULL) {
+				if (filename == NULL) {
 					lastError = "No current filename";
 					print_error_message(lastError, verbose);
 					continue;
 				}
-				write_text(text, originalFilename, &lastError, verbose);
+				write_text(text, *filename, &lastError, verbose);
 			}
+
+			modified = false;
 		} else if (command == 'q') {
 			if (!ensure_no_suffix(&lastError, length, pos, verbose)) continue;
 			if (rangeSet) {
 				if (!ensure_range_valid(&lastError, lineFrom, lineTo, text, verbose)) continue;
 				if (!ensure_no_range_set(&lastError, rangeSet, verbose)) continue;
+			}
+
+			if (modified && quitWarningCounter == 0) {
+				quitWarningCounter = 2;
+				lastError = "Warning: buffer modified";
+				print_error_message(lastError, verbose);
+				continue;
 			}
 
 			break;
@@ -512,9 +536,14 @@ int main(int argc, char **argv) {
 		text = calloc(1, sizeof(*text));
 	}
 
-	int error = handle_input(text, initialError, filename);
+	char *originalFilename = filename;
+	int error = handle_input(text, initialError, &filename);
 
 	// No need to bother with this, but it makes it easier to check if there is any leak
+	if (filename != originalFilename) {
+		free(filename);
+	}
+
 	free_text(text);
 
 	return error;
