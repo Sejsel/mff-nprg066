@@ -9,7 +9,7 @@ ed: src/ed.c
 	gcc $(CFLAGS) -o $@ $^ $(LIBS)
 
 test: ed
-	cd tests/phase-1; export ED=../../ed; ../../stef/stef.sh;
+	cd tests/phase-1; export ED=../../ed; ../../stef/stef.sh; cd ../phase-2; ../../stef/stef.sh
 
 clean:
 	rm -f *.o ed
